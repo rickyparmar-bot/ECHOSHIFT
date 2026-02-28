@@ -5,12 +5,6 @@
 ## 🛰️ Project Vision
 `ECHOSHIFT` is a tactical deep-sea survival game where the world is hidden in total darkness. You control a high-tech salvage drone navigating the "Great Trench." To see, you must pulse high-frequency sonar waves that reveal the environment as glowing wireframe echoes.
 
-## 🌌 Leveraging the Antigravity Ecosystem
-This game is built as part of the **Antigravity** suite, utilizing core principles from the portfolio:
-- **EchoNet Sonar:** Game mechanics inspired by the `EchoNet` acoustic protocol. Every "ping" sends out a wave that physically interacts with geometry and returns data (visual wireframes).
-- **GravityClaw Salvage:** The drone's primary tool for retrieving ancient data cores from the seabed.
-- **NeuralHash Navigation:** Procedural level generation using deterministic hashing to create a unique, infinite abyss.
-
 ## 🕹️ Core Gameplay
 1. **Pulse to See:** Press `SPACE` to send a sonar ping. The environment is briefly revealed in neon outlines.
 2. **Resource Management:** Every ping costs **Battery**. Moving costs **Oxygen**.
