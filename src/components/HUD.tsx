@@ -9,6 +9,7 @@ interface GameStats {
     time: number;
     creatureNearby: boolean;
     stealthActive: boolean;
+    noiseLevel: number;
 }
 
 interface HUDProps {
@@ -120,9 +121,13 @@ const HUD: React.FC<HUDProps> = ({ stats }) => {
                         </div>
                         <div className="flex items-end gap-[2px] h-6">
                             {Array.from({ length: 24 }).map((_, i) => {
-                                const intensity = stats.creatureNearby
-                                    ? Math.random() * 100
-                                    : Math.random() * 40 + (stats.stealthActive ? 0 : 10);
+                                const baseNoise = stats.creatureNearby
+                                    ? 60 + Math.random() * 40
+                                    : stats.stealthActive
+                                        ? Math.random() * 15
+                                        : Math.random() * 30 + 5;
+                                const bumpBoost = stats.noiseLevel * (0.6 + Math.random() * 0.4);
+                                const intensity = Math.min(100, baseNoise + bumpBoost);
                                 return (
                                     <div
                                         key={i}
@@ -130,7 +135,7 @@ const HUD: React.FC<HUDProps> = ({ stats }) => {
                                         style={{
                                             height: `${intensity}%`,
                                             backgroundColor: intensity > 70 ? '#ff3355' : intensity > 40 ? '#ffcc00' : '#00ffcc',
-                                            opacity: 0.6,
+                                            opacity: 0.6 + (stats.noiseLevel > 30 ? 0.3 : 0),
                                         }}
                                     />
                                 );
@@ -142,16 +147,16 @@ const HUD: React.FC<HUDProps> = ({ stats }) => {
                     <div className="flex gap-2">
                         <div
                             className={`px-2.5 py-1 rounded text-[10px] uppercase tracking-wider border ${stats.battery > 10
-                                    ? 'bg-[#00ffcc]/10 text-[#00ffcc]/80 border-[#00ffcc]/30 animate-pulse'
-                                    : 'bg-[#ff3355]/10 text-[#ff3355]/80 border-[#ff3355]/30'
+                                ? 'bg-[#00ffcc]/10 text-[#00ffcc]/80 border-[#00ffcc]/30 animate-pulse'
+                                : 'bg-[#ff3355]/10 text-[#ff3355]/80 border-[#ff3355]/30'
                                 }`}
                         >
                             {stats.battery > 10 ? '◉ Sonar Ready' : '◎ Sonar Offline'}
                         </div>
                         <div
                             className={`px-2.5 py-1 rounded text-[10px] uppercase tracking-wider border ${stats.stealthActive
-                                    ? 'bg-[#00ffcc]/10 text-[#00ffcc]/80 border-[#00ffcc]/30'
-                                    : 'bg-white/5 text-white/30 border-white/10'
+                                ? 'bg-[#00ffcc]/10 text-[#00ffcc]/80 border-[#00ffcc]/30'
+                                : 'bg-white/5 text-white/30 border-white/10'
                                 }`}
                         >
                             {stats.stealthActive ? '◉ Stealth' : '◎ Normal'}
@@ -167,8 +172,8 @@ const HUD: React.FC<HUDProps> = ({ stats }) => {
                             <div
                                 key={i}
                                 className={`w-4 h-4 rounded-sm border flex items-center justify-center transition-all duration-300 ${i < stats.cores
-                                        ? 'bg-[#ffcc00]/20 border-[#ffcc00]/60 shadow-[0_0_8px_rgba(255,204,0,0.3)]'
-                                        : 'bg-white/5 border-white/10'
+                                    ? 'bg-[#ffcc00]/20 border-[#ffcc00]/60 shadow-[0_0_8px_rgba(255,204,0,0.3)]'
+                                    : 'bg-white/5 border-white/10'
                                     }`}
                             >
                                 {i < stats.cores && (

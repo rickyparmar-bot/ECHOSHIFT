@@ -202,6 +202,7 @@ const SonarGame: React.FC = () => {
     time: 0,
     creatureNearby: false,
     stealthActive: false,
+    noiseLevel: 0,
   });
 
   // Game state refs (used by game loop for perf)
@@ -220,6 +221,8 @@ const SonarGame: React.FC = () => {
   const creatureNearbyRef = useRef(false);
   const screenShakeRef = useRef(0);
   const lastPingTimeRef = useRef(0);
+  const noiseLevelRef = useRef(0);
+  const bumpCooldownRef = useRef(0);
 
   const startGame = useCallback(() => {
     // Reset everything
@@ -363,8 +366,71 @@ const SonarGame: React.FC = () => {
 
       p.vx *= FRICTION;
       p.vy *= FRICTION;
-      p.x += p.vx;
-      p.y += p.vy;
+
+      // Apply movement with AABB collision
+      const PLAYER_RADIUS = 6;
+      const newX = p.x + p.vx;
+      const newY = p.y + p.vy;
+      let collidedX = false;
+      let collidedY = false;
+
+      // Check X-axis collision
+      for (const w of wallsRef.current) {
+        if (
+          newX + PLAYER_RADIUS > w.x &&
+          newX - PLAYER_RADIUS < w.x + w.w &&
+          p.y + PLAYER_RADIUS > w.y &&
+          p.y - PLAYER_RADIUS < w.y + w.h
+        ) {
+          collidedX = true;
+          break;
+        }
+      }
+      // Check Y-axis collision
+      for (const w of wallsRef.current) {
+        if (
+          p.x + PLAYER_RADIUS > w.x &&
+          p.x - PLAYER_RADIUS < w.x + w.w &&
+          newY + PLAYER_RADIUS > w.y &&
+          newY - PLAYER_RADIUS < w.y + w.h
+        ) {
+          collidedY = true;
+          break;
+        }
+      }
+
+      if (collidedX) {
+        p.vx = 0;
+      } else {
+        p.x = newX;
+      }
+      if (collidedY) {
+        p.vy = 0;
+      } else {
+        p.y = newY;
+      }
+
+      // Bump penalty (screen shake + noise spike)
+      if (bumpCooldownRef.current > 0) bumpCooldownRef.current -= dt;
+      if ((collidedX || collidedY) && bumpCooldownRef.current <= 0) {
+        screenShakeRef.current = 10;
+        noiseLevelRef.current = Math.min(100, noiseLevelRef.current + 60);
+        bumpCooldownRef.current = 200; // ms cooldown between bumps
+        // Alert creatures to player bump noise
+        creaturesRef.current.forEach((c) => {
+          const dist = Math.hypot(c.x - p.x, c.y - p.y);
+          if (dist < 600) {
+            c.targetX = p.x + (Math.random() - 0.5) * 40;
+            c.targetY = p.y + (Math.random() - 0.5) * 40;
+          }
+        });
+      }
+
+      // Noise level decay
+      if (noiseLevelRef.current > 0) {
+        noiseLevelRef.current *= 0.985;
+        if (noiseLevelRef.current < 0.5) noiseLevelRef.current = 0;
+      }
 
       // Trail
       if (Math.abs(p.vx) > 0.2 || Math.abs(p.vy) > 0.2) {
@@ -512,6 +578,7 @@ const SonarGame: React.FC = () => {
           time: timeRef.current,
           creatureNearby: creatureNearbyRef.current,
           stealthActive: stealth,
+          noiseLevel: noiseLevelRef.current,
         });
       }
     }
