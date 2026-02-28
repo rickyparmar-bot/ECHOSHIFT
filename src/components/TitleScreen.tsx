@@ -3,9 +3,12 @@ import { motion } from 'framer-motion';
 
 interface TitleScreenProps {
   onStart: () => void;
+  username: string;
+  maxDepth: number;
+  totalCores: number;
 }
 
-const TitleScreen: React.FC<TitleScreenProps> = ({ onStart }) => {
+const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, username, maxDepth, totalCores }) => {
   const [showControls, setShowControls] = useState(false);
   const [particles] = useState(() =>
     Array.from({ length: 40 }, () => ({
@@ -61,9 +64,8 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart }) => {
         {[0, 1, 2].map((i) => (
           <div
             key={i}
-            className={`absolute rounded-full border border-[#00ffcc]/15 sonar-ring ${
-              i === 1 ? 'sonar-ring-delay-1' : i === 2 ? 'sonar-ring-delay-2' : ''
-            }`}
+            className={`absolute rounded-full border border-[#00ffcc]/15 sonar-ring ${i === 1 ? 'sonar-ring-delay-1' : i === 2 ? 'sonar-ring-delay-2' : ''
+              }`}
             style={{ width: '700px', height: '700px' }}
           />
         ))}
@@ -138,6 +140,23 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart }) => {
             >
               <span className="relative z-10">[ Press Enter to Dive ]</span>
             </button>
+
+            {/* Player Stats */}
+            {username && (
+              <div className="mb-10 p-4 border border-[#00ffcc]/20 bg-black/50 rounded flex flex-col items-center gap-2 max-w-sm mx-auto shadow-[0_0_15px_rgba(0,255,204,0.1)]">
+                <div className="text-[#00ffcc] font-bold tracking-widest uppercase text-sm mb-1">
+                  AGENT: {username}
+                </div>
+                <div className="flex w-full justify-between text-xs text-white/70">
+                  <span>MAX DEPTH:</span>
+                  <span className="text-[#00ffcc]">{maxDepth}m</span>
+                </div>
+                <div className="flex w-full justify-between text-xs text-white/70">
+                  <span>LIFETIME CORES:</span>
+                  <span className="text-[#00ffcc]">{totalCores}</span>
+                </div>
+              </div>
+            )}
 
             {/* Controls grid */}
             <div className="grid grid-cols-2 gap-x-12 gap-y-3 max-w-xs mx-auto text-[11px]">

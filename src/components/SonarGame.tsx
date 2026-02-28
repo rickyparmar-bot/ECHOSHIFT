@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import LoginScreen from './LoginScreen';
 import TitleScreen from './TitleScreen';
 import GameOverScreen from './GameOverScreen';
 import HUD from './HUD';
@@ -55,7 +56,7 @@ interface TrailPoint {
   age: number;
 }
 
-type GameScreen = 'title' | 'playing' | 'gameover' | 'victory';
+type GameScreen = 'login' | 'title' | 'playing' | 'gameover' | 'victory';
 
 // ======================== CONSTANTS ========================
 
@@ -184,7 +185,12 @@ function generateParticles(px: number, py: number): Particle[] {
 
 const SonarGame: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [screen, setScreen] = useState<GameScreen>('title');
+  const [screen, setScreen] = useState<GameScreen>('login');
+
+  // User stats
+  const [username, setUsername] = useState('');
+  const [maxDepth, setMaxDepth] = useState(0);
+  const [totalCores, setTotalCores] = useState(0);
 
   // Game stats (display only — game logic uses refs)
   const [stats, setStats] = useState({
@@ -237,6 +243,42 @@ const SonarGame: React.FC = () => {
   const restartGame = useCallback(() => {
     setScreen('title');
   }, []);
+
+  const handleLogin = useCallback((name: string, isNewUser: boolean) => {
+    setUsername(name);
+    if (!isNewUser) {
+      const saved = localStorage.getItem(`echoshift_user_${name.toLowerCase()}`);
+      if (saved) {
+        const data = JSON.parse(saved);
+        setMaxDepth(data.maxDepth || 0);
+        setTotalCores(data.totalCores || 0);
+      }
+    } else {
+      setMaxDepth(0);
+      setTotalCores(0);
+    }
+    setScreen('title');
+  }, []);
+
+  // Save progress when game ends
+  useEffect(() => {
+    if (screen === 'gameover' || screen === 'victory') {
+      if (!username) return;
+      const finalDepth = Math.floor(playerRef.current.y / 8);
+      const runCores = coresCollectedRef.current;
+
+      const key = `echoshift_user_${username.toLowerCase()}`;
+      const existing = localStorage.getItem(key);
+      if (existing) {
+        const data = JSON.parse(existing);
+        data.maxDepth = Math.max(data.maxDepth || 0, finalDepth);
+        data.totalCores = (data.totalCores || 0) + runCores;
+        localStorage.setItem(key, JSON.stringify(data));
+        setMaxDepth(data.maxDepth);
+        setTotalCores(data.totalCores);
+      }
+    }
+  }, [screen, username]);
 
   // ======================== RESIZE ========================
 
@@ -709,11 +751,17 @@ const SonarGame: React.FC = () => {
 
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden">
-      {screen === 'title' && <TitleScreen onStart={startGame} />}
+      <canvas
+        ref={canvasRef}
+        className="block bg-black"
+        style={{ display: screen === 'playing' ? 'block' : 'none' }}
+      />
+
+      {screen === 'login' && <LoginScreen onLogin={handleLogin} />}
+      {screen === 'title' && <TitleScreen onStart={startGame} username={username} maxDepth={maxDepth} totalCores={totalCores} />}
 
       {screen === 'playing' && (
         <>
-          <canvas ref={canvasRef} className="absolute inset-0" />
           <HUD stats={stats} />
           {/* Scanlines overlay */}
           <div className="absolute inset-0 scanlines pointer-events-none" />
