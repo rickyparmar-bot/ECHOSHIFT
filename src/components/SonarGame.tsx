@@ -124,21 +124,51 @@ function generateWalls(): Wall[] {
   return walls;
 }
 
-function generateCores(): Core[] {
+function isInsideAnyWall(px: number, py: number, walls: Wall[], padding = 20): boolean {
+  for (const w of walls) {
+    if (
+      px > w.x - padding &&
+      px < w.x + w.w + padding &&
+      py > w.y - padding &&
+      py < w.y + w.h + padding
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function generateCores(walls: Wall[]): Core[] {
   const cores: Core[] = [];
+
+  function findSafePosition(cx: number, cy: number, rangeX: number, rangeY: number): { x: number; y: number } {
+    for (let attempt = 0; attempt < 50; attempt++) {
+      const x = cx + (Math.random() - 0.5) * rangeX;
+      const y = cy + Math.random() * rangeY;
+      if (!isInsideAnyWall(x, y, walls)) {
+        return { x, y };
+      }
+    }
+    // Fallback: place at center of corridor (should always be safe)
+    return { x: 0, y: cy + rangeY * 0.5 };
+  }
+
   // First core is close to help player discover the mechanic
+  const first = findSafePosition(100, 120, 120, 80);
   cores.push({
-    x: 80 + Math.random() * 60,
-    y: 150 + Math.random() * 80,
+    x: first.x,
+    y: first.y,
     collected: false,
     pulsePhase: Math.random() * Math.PI * 2,
     revealed: 0,
   });
+
   // Rest are spread deeper
   for (let i = 1; i < CORE_COUNT; i++) {
+    const pos = findSafePosition(0, 400 + i * 500, 300, 200);
     cores.push({
-      x: Math.random() * 400 - 200,
-      y: 400 + i * 500 + Math.random() * 200,
+      x: pos.x,
+      y: pos.y,
       collected: false,
       pulsePhase: Math.random() * Math.PI * 2,
       revealed: 0,
@@ -236,7 +266,7 @@ const SonarGame: React.FC = () => {
     trailRef.current = [];
     pingsRef.current = [];
     wallsRef.current = generateWalls();
-    coresRef.current = generateCores();
+    coresRef.current = generateCores(wallsRef.current);
     creaturesRef.current = generateCreatures();
     particlesRef.current = generateParticles(0, 0);
     keysRef.current = {};
