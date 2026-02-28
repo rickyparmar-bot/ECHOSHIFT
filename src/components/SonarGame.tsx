@@ -475,9 +475,10 @@ const SonarGame: React.FC = () => {
       // Battery recharge
       batteryRef.current = Math.min(100, batteryRef.current + BATTERY_RECHARGE);
 
-      // Oxygen drain
+      // Oxygen drain — scales with cores collected (dynamic difficulty)
+      const coresDiffMultiplier = 1 + coresCollectedRef.current * 0.22;
       const moving = Math.abs(p.vx) > 0.15 || Math.abs(p.vy) > 0.15;
-      oxygenRef.current -= moving ? OXYGEN_MOVE_DRAIN : OXYGEN_IDLE_DRAIN;
+      oxygenRef.current -= (moving ? OXYGEN_MOVE_DRAIN : OXYGEN_IDLE_DRAIN) * coresDiffMultiplier;
       oxygenRef.current = Math.max(0, oxygenRef.current);
 
       // Time
@@ -524,18 +525,22 @@ const SonarGame: React.FC = () => {
         });
       });
 
-      // --- Fade revealed objects ---
+      // --- Fade revealed objects (scales with cores — darkness closes in) ---
+      const fadeDiffMultiplier = 1 + coresCollectedRef.current * 0.3;
+      const scaledWallFade = WALL_FADE_SPEED * fadeDiffMultiplier;
+      const scaledCreatureFade = CREATURE_REVEAL_FADE * fadeDiffMultiplier;
+
       wallsRef.current.forEach((w) => {
-        if (w.revealed > 0) w.revealed -= WALL_FADE_SPEED;
+        if (w.revealed > 0) w.revealed -= scaledWallFade;
         if (w.revealed < 0) w.revealed = 0;
       });
       coresRef.current.forEach((c) => {
-        if (c.revealed > 0) c.revealed -= WALL_FADE_SPEED;
+        if (c.revealed > 0) c.revealed -= scaledWallFade;
         if (c.revealed < 0) c.revealed = 0;
         c.pulsePhase += 0.05;
       });
       creaturesRef.current.forEach((c) => {
-        if (c.revealed > 0) c.revealed -= CREATURE_REVEAL_FADE;
+        if (c.revealed > 0) c.revealed -= scaledCreatureFade;
         if (c.revealed < 0) c.revealed = 0;
       });
 
