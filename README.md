@@ -24,4 +24,4 @@ This game is built as part of the **Antigravity** suite, utilizing core principl
 - **Logic:** TypeScript
 
 ---
-*Built for the "Beneath the Surface" Hackathon - powered by Antigravity.*
+
